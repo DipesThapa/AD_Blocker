@@ -7,10 +7,6 @@ const heuristicsToggle = document.getElementById('heuristics-toggle');
 const sameDomainToggle = document.getElementById('same-domain-toggle');
 const allowlistEl = document.getElementById('allowlist');
 const statusMsg = document.getElementById('status-message');
-const supportListEl = document.getElementById('support-links');
-const supportForm = document.getElementById('support-form');
-const supportLabelInput = document.getElementById('support-label');
-const supportUrlInput = document.getElementById('support-url');
 
 const summary = {
   status: document.getElementById('summary-status'),
@@ -18,8 +14,6 @@ const summary = {
   blocked: document.getElementById('summary-blocked'),
   updated: document.getElementById('summary-updated')
 };
-
-let currentSupportLinks = [];
 
 function sendMessage(type, payload = {}) {
   return new Promise((resolve, reject) => {
@@ -169,56 +163,12 @@ function renderAllowlist(domains) {
   }
 }
 
-function renderSupportLinks(links = []) {
-  if (!supportListEl) return;
-  currentSupportLinks = links.map((link) => ({ ...link }));
-  supportListEl.innerHTML = '';
-  if (!currentSupportLinks.length) {
-    const li = document.createElement('li');
-    li.textContent = 'No support links configured.';
-    li.style.color = '#5f6368';
-    supportListEl.appendChild(li);
-    return;
-  }
-  for (const link of currentSupportLinks) {
-    const li = document.createElement('li');
-    const content = document.createElement('div');
-    const anchor = document.createElement('a');
-    anchor.href = link.url;
-    anchor.target = '_blank';
-    anchor.rel = 'noopener noreferrer';
-    anchor.textContent = link.label;
-    content.appendChild(anchor);
-    li.appendChild(content);
-    const removeBtn = document.createElement('button');
-    removeBtn.className = 'danger';
-    removeBtn.textContent = 'Remove';
-    removeBtn.addEventListener('click', async () => {
-      const updated = currentSupportLinks.filter((entry) => entry.id !== link.id);
-      await persistSupportLinks(updated);
-    });
-    li.appendChild(removeBtn);
-    supportListEl.appendChild(li);
-  }
-}
-
-async function persistSupportLinks(links) {
-  try {
-    await sendMessage('OPTIONS_SAVE_SUPPORT_LINKS', { links });
-    await loadState();
-    setStatus('Support links updated.');
-  } catch (err) {
-    setStatus(err.message, true);
-  }
-}
-
 async function loadState() {
   try {
     const state = await sendMessage('OPTIONS_STATE');
     renderSummary(state);
     renderLists(state.filterLists);
     renderAllowlist(state.allowlist);
-    renderSupportLinks(state.supportLinks);
   } catch (err) {
     setStatus(err.message, true);
   }
@@ -292,37 +242,5 @@ sameDomainToggle.addEventListener('change', async (event) => {
     sameDomainToggle.disabled = false;
   }
 });
-
-if (supportForm) {
-  supportForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const label = supportLabelInput.value.trim();
-    const url = supportUrlInput.value.trim();
-    if (!label || !url) {
-      setStatus('Support label and URL are required.', true);
-      return;
-    }
-    let normalizedUrl;
-    try {
-      normalizedUrl = new URL(url).toString();
-    } catch {
-      setStatus('Enter a valid support URL (https://…).', true);
-      return;
-    }
-    const nextLinks = [
-      ...currentSupportLinks,
-      { id: `support-${Date.now()}`, label, url: normalizedUrl }
-    ];
-    const submitBtn = supportForm.querySelector('button[type="submit"]');
-    if (submitBtn) submitBtn.disabled = true;
-    try {
-      await persistSupportLinks(nextLinks);
-      supportLabelInput.value = '';
-      supportUrlInput.value = '';
-    } finally {
-      if (submitBtn) submitBtn.disabled = false;
-    }
-  });
-}
 
 loadState();
