@@ -17,6 +17,7 @@
       .map((host) => normalize(host.trim()))
       .filter(Boolean)
   );
+  const trustedHostArray = Array.from(trustedHosts);
 
   let lastGestureHost = siteHost;
   let lastGestureAt = 0;
@@ -50,9 +51,13 @@
 
   const isTrustedHost = (host) =>
     Boolean(host) &&
-    Array.from(trustedHosts).some(
-      (trusted) => host === trusted || host.endsWith(`.${trusted}`)
-    );
+    trustedHostArray.some((trusted) => host === trusted || host.endsWith(`.${trusted}`));
+
+  const isTrustedValue = (value) => {
+    if (!value) return false;
+    const lower = String(value).toLowerCase();
+    return trustedHostArray.some((trusted) => lower.includes(trusted));
+  };
 
   const shouldAllow = (url) => {
     if (!url || url === 'about:blank') {
@@ -64,7 +69,7 @@
     } catch {
       // ignore
     }
-    if (isTrustedHost(host)) {
+    if (isTrustedHost(host) || isTrustedValue(url)) {
       return true;
     }
     if (sameDomainOnly) {
@@ -100,7 +105,7 @@
   HTMLAnchorElement.prototype.click = function (...args) {
     try {
       const host = normalize(new URL(this.href, location.href).hostname);
-      if (isTrustedHost(host)) {
+      if (isTrustedHost(host) || isTrustedValue(this.href)) {
         return originalAnchorClick.apply(this, args);
       }
       if (matchesSite(host)) {
@@ -123,6 +128,7 @@
       typeof name === 'string' &&
       name.toLowerCase() === 'href' &&
       !isTrustedHost(normalizeSafeHost(value)) &&
+      !isTrustedValue(value) &&
       !matchesSite(normalizeSafeHost(value)) &&
       !shouldAllow(value)
     ) {
