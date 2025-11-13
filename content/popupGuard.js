@@ -11,6 +11,9 @@
   const matchesSite = (host) => host === siteHost || host.endsWith(`.${siteHost}`);
   const gestureWindowMs = Number(script?.dataset?.gestureWindowMs || 1500);
   let sameDomainOnly = script?.dataset?.sameDomainOnly === 'true';
+  const trustedHosts = new Set(
+    (script?.dataset?.trustedHosts || 'googleadservices.com').split(',').map((host) => normalize(host.trim())).filter(Boolean)
+  );
 
   let lastGestureHost = siteHost;
   let lastGestureAt = 0;
@@ -42,6 +45,8 @@
     document.addEventListener(type, baseHandler, true);
   });
 
+  const isTrustedHost = (host) => trustedHosts.has(host);
+
   const shouldAllow = (url) => {
     if (!url || url === 'about:blank') {
       return false;
@@ -51,6 +56,9 @@
       host = normalize(new URL(url, location.href).hostname);
     } catch {
       // ignore
+    }
+    if (isTrustedHost(host)) {
+      return true;
     }
     if (sameDomainOnly) {
       return matchesSite(host);
@@ -85,6 +93,9 @@
   HTMLAnchorElement.prototype.click = function (...args) {
     try {
       const host = normalize(new URL(this.href, location.href).hostname);
+      if (isTrustedHost(host)) {
+        return originalAnchorClick.apply(this, args);
+      }
       if (matchesSite(host)) {
         return originalAnchorClick.apply(this, args);
       }
@@ -104,6 +115,7 @@
       this instanceof HTMLAnchorElement &&
       typeof name === 'string' &&
       name.toLowerCase() === 'href' &&
+      !isTrustedHost(normalizeSafeHost(value)) &&
       !matchesSite(normalizeSafeHost(value)) &&
       !shouldAllow(value)
     ) {
