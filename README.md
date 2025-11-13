@@ -1,5 +1,7 @@
 # AdBlock Ultra
 
+> Repository: `AD_Blocker`
+
 AdBlock Ultra is a Manifest V3 browser extension that fuses dynamic network rules with cosmetic and heuristic filtering to aggressively block ads, trackers, and sponsored widgets on every site.
 
 ## Highlights
