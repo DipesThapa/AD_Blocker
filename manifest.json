@@ -3,6 +3,7 @@
   "name": "AdBlock Ultra",
   "description": "Blocks intrusive ads and trackers using dynamic filter lists, heuristics, and cosmetic filtering.",
   "version": "0.1.0",
+  "homepage_url": "https://github.com/DipesThapa/AD_Blocker",
   "minimum_chrome_version": "109",
   "permissions": [
     "declarativeNetRequest",

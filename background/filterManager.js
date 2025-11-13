@@ -19,22 +19,27 @@ const DISABLE_RULE_ID = 900000;
 const MAX_CACHE_SIZE = 900_000; // chars
 const AUTO_UPDATE_ALARM = 'aegis::auto-update';
 
-const DEFAULT_SUPPORT_LINKS = [
-  {
-    id: 'github-sponsors',
-    label: 'GitHub Sponsors',
-    url: 'https://github.com/sponsors/adblockultra'
-  },
-  {
-    id: 'buymeacoffee',
-    label: 'Buy Me a Coffee',
-    url: 'https://www.buymeacoffee.com/adblockultra'
-  }
-];
+const DEFAULT_SUPPORT_LINKS = [];
 const DEPRECATED_SUPPORT_URLS = new Set([
   'https://github.com/sponsors/aegisadshield',
   'https://www.buymeacoffee.com/aegisadshield'
 ]);
+const SUPPORT_AUTOCONFIG_FALLBACKS = {
+  github: ['adblockultra'],
+  buymeacoffee: ['adblockultra']
+};
+const SUPPORT_PROVIDERS = {
+  github: {
+    id: 'github-sponsors',
+    label: 'GitHub Sponsors',
+    buildUrl: (handle) => `https://github.com/sponsors/${handle}`
+  },
+  buymeacoffee: {
+    id: 'buymeacoffee',
+    label: 'Buy Me a Coffee',
+    buildUrl: (handle) => `https://www.buymeacoffee.com/${handle}`
+  }
+};
 
 const DEFAULT_LISTS = [
   {
@@ -69,6 +74,7 @@ function createDefaultState() {
     filterLists: structuredClone(DEFAULT_LISTS),
     allowlist: [],
     supportLinks: structuredClone(DEFAULT_SUPPORT_LINKS),
+    supportAutoconfigChecked: false,
     sameDomainOnly: false,
     stats: {
       blocked: 0,
@@ -105,41 +111,46 @@ async function hashText(text) {
 
 async function ensureState() {
   let state = await getState();
+  let dirty = false;
   if (!state) {
     state = createDefaultState();
-    await saveState(state);
-  } else {
-    if (!Array.isArray(state.filterLists)) {
-      state.filterLists = [];
+    dirty = true;
+  }
+  if (!Array.isArray(state.filterLists)) {
+    state.filterLists = [];
+    dirty = true;
+  }
+  if (!Array.isArray(state.allowlist)) {
+    state.allowlist = [];
+    dirty = true;
+  }
+  if (!Array.isArray(state.supportLinks)) {
+    state.supportLinks = structuredClone(DEFAULT_SUPPORT_LINKS);
+    dirty = true;
+  }
+  if (typeof state.supportAutoconfigChecked !== 'boolean') {
+    state.supportAutoconfigChecked = false;
+    dirty = true;
+  }
+  if (typeof state.sameDomainOnly !== 'boolean') {
+    state.sameDomainOnly = false;
+    dirty = true;
+  }
+  if (!state.stats) {
+    state.stats = { blocked: 0, updatedAt: Date.now() };
+    dirty = true;
+  }
+  const ids = new Set(state.filterLists?.map((l) => l.id));
+  for (const builtin of DEFAULT_LISTS) {
+    if (!ids.has(builtin.id)) {
+      state.filterLists.push(structuredClone(builtin));
+      dirty = true;
     }
-    if (!Array.isArray(state.allowlist)) {
-      state.allowlist = [];
-    }
-    if (!Array.isArray(state.supportLinks)) {
-      state.supportLinks = structuredClone(DEFAULT_SUPPORT_LINKS);
-    } else {
-      const hadDeprecated = state.supportLinks.some((link) =>
-        DEPRECATED_SUPPORT_URLS.has(link?.url)
-      );
-      state.supportLinks = state.supportLinks.filter(
-        (link) => link && link.url && !DEPRECATED_SUPPORT_URLS.has(link.url)
-      );
-      if (!state.supportLinks.length && hadDeprecated) {
-        state.supportLinks = structuredClone(DEFAULT_SUPPORT_LINKS);
-      }
-    }
-    if (typeof state.sameDomainOnly !== 'boolean') {
-      state.sameDomainOnly = false;
-    }
-    if (!state.stats) {
-      state.stats = { blocked: 0, updatedAt: Date.now() };
-    }
-    const ids = new Set(state.filterLists?.map((l) => l.id));
-    for (const builtin of DEFAULT_LISTS) {
-      if (!ids.has(builtin.id)) {
-        state.filterLists.push(structuredClone(builtin));
-      }
-    }
+  }
+  if (await normalizeSupportLinks(state)) {
+    dirty = true;
+  }
+  if (dirty) {
     await saveState(state);
   }
   stateCache = state;
@@ -491,14 +502,162 @@ export async function setSameDomainOnly(enabled) {
 
 export async function saveSupportLinks(links = []) {
   const state = stateCache || (await ensureState());
-  state.supportLinks = links.map((link, index) => ({
-    id: link.id || `support-${Date.now()}-${index}`,
-    label: link.label || 'Support',
-    url: link.url || ''
-  }));
+  const timestamp = Date.now();
+  state.supportLinks = links
+    .map((link, index) => sanitizeSupportLink(link, `support-${timestamp}-${index}`))
+    .filter(Boolean);
+  state.supportAutoconfigChecked = true;
   await saveState(state);
   stateCache = state;
   return state;
+}
+
+async function normalizeSupportLinks(state) {
+  let dirty = false;
+  const beforeLength = state.supportLinks.length;
+  state.supportLinks = state.supportLinks
+    .map((link) => sanitizeSupportLink(link, link?.id))
+    .filter(Boolean);
+  if (state.supportLinks.length !== beforeLength) {
+    dirty = true;
+  }
+  if (!state.supportLinks.length && !state.supportAutoconfigChecked) {
+    const detected = await autoDetectSupportLinks();
+    if (detected.length) {
+      state.supportLinks = detected;
+    }
+    state.supportAutoconfigChecked = true;
+    dirty = true;
+  }
+  return dirty;
+}
+
+function sanitizeSupportLink(link, fallbackId) {
+  if (!link) return null;
+  const label = (link.label || '').trim();
+  const url = (link.url || '').trim();
+  if (!isValidHttpUrl(url) || DEPRECATED_SUPPORT_URLS.has(url)) {
+    return null;
+  }
+  return {
+    id: link.id || fallbackId || `support-${Date.now()}`,
+    label: label || 'Support',
+    url
+  };
+}
+
+function isValidHttpUrl(value) {
+  if (!value) return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+function extractRepoMeta() {
+  try {
+    const manifest = chrome.runtime.getManifest?.();
+    const homepage = manifest?.homepage_url;
+    if (!homepage) {
+      return null;
+    }
+    const url = new URL(homepage);
+    if (url.hostname !== 'github.com') {
+      return null;
+    }
+    const [owner, repo] = url.pathname.split('/').filter(Boolean);
+    if (owner && repo) {
+      return { owner, repo };
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return null;
+}
+
+function normalizeGithubHandle(handle) {
+  if (!handle) return null;
+  return handle.trim().replace(/^@/, '').replace(/\/.*/, '').toLowerCase();
+}
+
+function normalizeCoffeeHandle(handle) {
+  if (!handle) return null;
+  return handle.trim().replace(/^@/, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function unique(values) {
+  return [...new Set(values.filter(Boolean))];
+}
+
+async function autoDetectSupportLinks() {
+  const meta = extractRepoMeta();
+  const owner = meta?.owner;
+  const repo = meta?.repo;
+  const githubHandles = unique([
+    normalizeGithubHandle(owner),
+    normalizeGithubHandle(repo),
+    ...SUPPORT_AUTOCONFIG_FALLBACKS.github.map(normalizeGithubHandle)
+  ]);
+  const coffeeHandles = unique([
+    normalizeCoffeeHandle(owner),
+    normalizeCoffeeHandle(repo),
+    ...SUPPORT_AUTOCONFIG_FALLBACKS.buymeacoffee.map(normalizeCoffeeHandle)
+  ]);
+  const links = [];
+  const sponsorLink = await resolveProviderLink('github', githubHandles);
+  if (sponsorLink) {
+    links.push(sponsorLink);
+  }
+  const coffeeLink = await resolveProviderLink('buymeacoffee', coffeeHandles);
+  if (coffeeLink) {
+    links.push(coffeeLink);
+  }
+  return links;
+}
+
+async function resolveProviderLink(providerKey, handles) {
+  const provider = SUPPORT_PROVIDERS[providerKey];
+  if (!provider) {
+    return null;
+  }
+  for (const handle of handles) {
+    if (!handle) continue;
+    const url = provider.buildUrl(handle);
+    if (await isUrlReachable(url)) {
+      return {
+        id: provider.id,
+        label: provider.label,
+        url
+      };
+    }
+  }
+  return null;
+}
+
+async function isUrlReachable(url) {
+  try {
+    const headRes = await fetch(url, {
+      method: 'HEAD',
+      cache: 'no-store',
+      redirect: 'follow'
+    });
+    if (headRes.ok) {
+      return true;
+    }
+    if (headRes.status === 405 || headRes.status === 501) {
+      const getRes = await fetch(url, {
+        method: 'GET',
+        cache: 'no-store',
+        redirect: 'follow'
+      });
+      return getRes.ok;
+    }
+  } catch (err) {
+    console.warn('Support link reachability check failed', url, err);
+  }
+  return false;
 }
 
 chrome.alarms.onAlarm.addListener((alarm) => {
