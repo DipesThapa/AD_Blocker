@@ -1,8 +1,5 @@
 const refreshBtn = document.getElementById('refresh-button');
 const listView = document.getElementById('list-view');
-const addForm = document.getElementById('add-list-form');
-const titleInput = document.getElementById('list-title');
-const urlInput = document.getElementById('list-url');
 const heuristicsToggle = document.getElementById('heuristics-toggle');
 const sameDomainToggle = document.getElementById('same-domain-toggle');
 const allowlistEl = document.getElementById('allowlist');
@@ -173,35 +170,6 @@ async function loadState() {
     setStatus(err.message, true);
   }
 }
-
-addForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const title = titleInput.value.trim();
-  const url = urlInput.value.trim();
-  if (!title || !url) {
-    setStatus('Title and URL are required.', true);
-    return;
-  }
-  let normalizedUrl;
-  try {
-    normalizedUrl = new URL(url).toString();
-  } catch {
-    setStatus('Enter a valid URL (https://…).', true);
-    return;
-  }
-  addForm.querySelector('button[type=\"submit\"]').disabled = true;
-  try {
-    await sendMessage('OPTIONS_ADD_LIST', { title, url: normalizedUrl });
-    titleInput.value = '';
-    urlInput.value = '';
-    await loadState();
-    setStatus(`Added list "${title}".`);
-  } catch (err) {
-    setStatus(err.message, true);
-  } finally {
-    addForm.querySelector('button[type=\"submit\"]').disabled = false;
-  }
-});
 
 refreshBtn.addEventListener('click', async () => {
   refreshBtn.disabled = true;

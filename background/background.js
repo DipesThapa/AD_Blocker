@@ -4,7 +4,6 @@ import {
   setEnabled,
   toggleSite,
   refreshFilters,
-  addFilterList,
   removeFilterList,
   toggleFilterList,
   getOptionsState,
@@ -64,10 +63,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     case 'OPTIONS_STATE': {
       handlerPromise = handlerPromise.then(() => getOptionsState());
-      break;
-    }
-    case 'OPTIONS_ADD_LIST': {
-      handlerPromise = handlerPromise.then(() => addFilterList(payload));
       break;
     }
     case 'OPTIONS_REMOVE_LIST': {
