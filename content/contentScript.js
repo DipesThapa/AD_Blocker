@@ -269,14 +269,12 @@ function initGlobalPopupGuard(config) {
   if (popupGuardInitialized) {
     return;
   }
-  if (POPUP_GUARD_DISABLED_HOSTS.includes(location.hostname)) {
-    popupGuardInitialized = true;
-    return;
-  }
   popupGuardInitialized = true;
+  const guardDisabled = POPUP_GUARD_DISABLED_HOSTS.includes(location.hostname);
   injectExternalScript('content/popupGuard.js', {
     siteHost: location.hostname,
-    sameDomainOnly: String(!!config?.sameDomainOnly)
+    sameDomainOnly: String(!!config?.sameDomainOnly),
+    disabled: String(guardDisabled)
   });
 }
 

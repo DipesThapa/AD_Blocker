@@ -1,9 +1,4 @@
 (() => {
-  if (window.__AEGIS_POPUP_GUARD__) {
-    window.__AEGIS_POPUP_GUARD__.updateConfig({ sameDomainOnly: window.__AEGIS_POPUP_GUARD__.sameDomainOnly });
-    return;
-  }
-
   const script = document.currentScript;
 
   const normalize = (host) => (host || '').replace(/^www\./i, '').toLowerCase();
@@ -11,6 +6,7 @@
   const matchesSite = (host) => host === siteHost || host.endsWith(`.${siteHost}`);
   const gestureWindowMs = Number(script?.dataset?.gestureWindowMs || 1500);
   let sameDomainOnly = script?.dataset?.sameDomainOnly === 'true';
+  let guardDisabled = script?.dataset?.disabled === 'true';
   const trustedHosts = new Set(
     (script?.dataset?.trustedHosts || 'googleadservices.com')
       .split(',')
@@ -24,6 +20,14 @@
   const trustedUrlPatterns = trustedHostArray.map(
     (host) => new RegExp(escapeRegex(host), 'i')
   );
+
+  if (window.__AEGIS_POPUP_GUARD__) {
+    window.__AEGIS_POPUP_GUARD__.updateConfig({
+      sameDomainOnly,
+      disabled: guardDisabled
+    });
+    return;
+  }
 
   let lastGestureHost = siteHost;
   let lastGestureAt = 0;
@@ -64,6 +68,9 @@
   };
 
   const shouldAllow = (url) => {
+    if (guardDisabled) {
+      return true;
+    }
     if (!url || url === 'about:blank') {
       return false;
     }
@@ -89,7 +96,7 @@
   const nativeOpen = window.open.bind(window);
   const guardedOpen = function (...args) {
     const url = args[0];
-    if (isTrustedValue(url)) {
+    if (guardDisabled || isTrustedValue(url)) {
       return nativeOpen.apply(window, args);
     }
     if (!shouldAllow(url)) {
@@ -110,7 +117,7 @@
 
   const originalAnchorClick = HTMLAnchorElement.prototype.click;
   HTMLAnchorElement.prototype.click = function (...args) {
-    if (isTrustedValue(this.href)) {
+    if (guardDisabled || isTrustedValue(this.href)) {
       return originalAnchorClick.apply(this, args);
     }
     try {
@@ -137,6 +144,7 @@
       this instanceof HTMLAnchorElement &&
       typeof name === 'string' &&
       name.toLowerCase() === 'href' &&
+      !guardDisabled &&
       !isTrustedValue(value) &&
       !isTrustedHost(normalizeSafeHost(value)) &&
       !matchesSite(normalizeSafeHost(value)) &&
@@ -162,10 +170,15 @@
 
   window.__AEGIS_POPUP_GUARD__ = {
     sameDomainOnly,
+    disabled: guardDisabled,
     updateConfig(config = {}) {
       if (typeof config.sameDomainOnly === 'boolean') {
         sameDomainOnly = config.sameDomainOnly;
         this.sameDomainOnly = sameDomainOnly;
+      }
+      if (typeof config.disabled === 'boolean') {
+        guardDisabled = config.disabled;
+        this.disabled = guardDisabled;
       }
     }
   };
