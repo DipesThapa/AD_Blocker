@@ -12,7 +12,10 @@
   const gestureWindowMs = Number(script?.dataset?.gestureWindowMs || 1500);
   let sameDomainOnly = script?.dataset?.sameDomainOnly === 'true';
   const trustedHosts = new Set(
-    (script?.dataset?.trustedHosts || 'googleadservices.com').split(',').map((host) => normalize(host.trim())).filter(Boolean)
+    (script?.dataset?.trustedHosts || 'googleadservices.com')
+      .split(',')
+      .map((host) => normalize(host.trim()))
+      .filter(Boolean)
   );
 
   let lastGestureHost = siteHost;
@@ -45,7 +48,11 @@
     document.addEventListener(type, baseHandler, true);
   });
 
-  const isTrustedHost = (host) => trustedHosts.has(host);
+  const isTrustedHost = (host) =>
+    Boolean(host) &&
+    Array.from(trustedHosts).some(
+      (trusted) => host === trusted || host.endsWith(`.${trusted}`)
+    );
 
   const shouldAllow = (url) => {
     if (!url || url === 'about:blank') {
