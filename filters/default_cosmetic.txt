@@ -1,0 +1,35 @@
+! Global cosmetic rules
+##.ad
+##.ads
+##.advertisement
+##.ad-container
+##.ad-banner
+##.sponsored
+##.sponsor
+##.sponsored-post
+##.promoted
+##.promo
+##[class*="ad-"]
+##[class*="-ad"]
+##[id*="ad-"]
+##[id*="-ad"]
+##[data-ad]
+##[data-ad-slot]
+##[aria-label="advertisement"]
+
+! Domain specific
+nytimes.com##section[data-testid="ad"]
+youtube.com##ytd-promoted-sparkles-web-renderer
+youtube.com#@#[role="banner"]
+reddit.com##.promotedlink
+facebook.com##[role="complementary"] div[aria-label="Sponsored"]
+twitter.com##article:has(a[href*="/sponsor/"])
+
+! Exceptions to avoid breaking core layouts
+youtube.com#@#[class*="ad-"]
+youtube.com#@#[class*="-ad"]
+youtube.com#@#[id*="ad-"]
+youtube.com#@#[id*="-ad"]
+youtube.com#@##masthead-container
+youtube.com#@#ytd-searchbox
+youtube.com#@##center

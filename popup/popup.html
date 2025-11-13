@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AdBlock Ultra</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <section class="status">
+        <div>
+          <h1 id="extension-status">Loading…</h1>
+          <p id="host-label"></p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="global-toggle" />
+          <span class="slider"></span>
+        </label>
+      </section>
+
+      <section class="stats">
+        <div>
+          <span class="stat-label">Requests blocked</span>
+          <span class="stat-value" id="blocked-count">0</span>
+        </div>
+        <div>
+          <span class="stat-label">Active rules</span>
+          <span class="stat-value" id="rule-count">0</span>
+        </div>
+      </section>
+
+      <section class="actions">
+        <button id="site-toggle">Pause on this site</button>
+        <button id="options-button" class="ghost">Open dashboard</button>
+      </section>
+      <section class="support" id="support-section">
+        <p>Support AdBlock Ultra</p>
+        <div id="support-buttons"></div>
+      </section>
+      <p id="message" class="message"></p>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

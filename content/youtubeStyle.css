@@ -1,0 +1,22 @@
+@media screen and (min-width: 0px) {
+  #masthead-container,
+  #masthead,
+  ytd-masthead,
+  ytd-masthead #center,
+  #center,
+  ytd-searchbox,
+  form#search-form {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  #player,
+  ytd-player,
+  #movie_player,
+  .html5-video-player {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}

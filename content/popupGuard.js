@@ -1,0 +1,133 @@
+(() => {
+  if (window.__AEGIS_POPUP_GUARD__) {
+    window.__AEGIS_POPUP_GUARD__.updateConfig({ sameDomainOnly: window.__AEGIS_POPUP_GUARD__.sameDomainOnly });
+    return;
+  }
+
+  const script = document.currentScript;
+
+  const normalize = (host) => (host || '').replace(/^www\./i, '').toLowerCase();
+  const siteHost = normalize(script?.dataset?.siteHost || location.hostname);
+  const matchesSite = (host) => host === siteHost || host.endsWith(`.${siteHost}`);
+  const gestureWindowMs = Number(script?.dataset?.gestureWindowMs || 1500);
+  let sameDomainOnly = script?.dataset?.sameDomainOnly === 'true';
+
+  let lastGestureHost = siteHost;
+  let lastGestureAt = 0;
+
+  const setGestureHost = (host) => {
+    lastGestureHost = host || siteHost;
+    lastGestureAt = Date.now();
+  };
+
+  const updateFromAnchor = (anchor) => {
+    try {
+      const url = new URL(anchor.href, location.href);
+      setGestureHost(normalize(url.hostname));
+    } catch {
+      setGestureHost(siteHost);
+    }
+  };
+
+  const baseHandler = (event) => {
+    const anchor = event.target.closest && event.target.closest('a[href]');
+    if (anchor) {
+      updateFromAnchor(anchor);
+      return;
+    }
+    setGestureHost(siteHost);
+  };
+
+  ['pointerdown', 'mousedown', 'touchstart', 'click', 'keydown'].forEach((type) => {
+    document.addEventListener(type, baseHandler, true);
+  });
+
+  const shouldAllow = (url) => {
+    if (!url || url === 'about:blank') {
+      return false;
+    }
+    let host = siteHost;
+    try {
+      host = normalize(new URL(url, location.href).hostname);
+    } catch {
+      // ignore
+    }
+    if (sameDomainOnly) {
+      return matchesSite(host);
+    }
+    const withinGesture = Date.now() - lastGestureAt <= gestureWindowMs;
+    if (!withinGesture) {
+      return matchesSite(host);
+    }
+    return host === lastGestureHost;
+  };
+
+  const nativeOpen = window.open.bind(window);
+  const guardedOpen = function (...args) {
+    const url = args[0];
+    if (!shouldAllow(url)) {
+      console.warn('[AdBlock Ultra] blocked popup', url);
+      return null;
+    }
+    return nativeOpen.apply(window, args);
+  };
+
+  Object.defineProperty(window, 'open', {
+    configurable: false,
+    enumerable: true,
+    get() {
+      return guardedOpen;
+    },
+    set() {},
+  });
+
+  const originalAnchorClick = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function (...args) {
+    try {
+      const host = normalize(new URL(this.href, location.href).hostname);
+      if (matchesSite(host)) {
+        return originalAnchorClick.apply(this, args);
+      }
+    } catch (err) {
+      // fall through to shouldAllow
+    }
+    if (!shouldAllow(this.href)) {
+      console.warn('[AdBlock Ultra] blocked anchor click', this.href);
+      return;
+    }
+    return originalAnchorClick.apply(this, args);
+  };
+
+  const originalSetAttribute = Element.prototype.setAttribute;
+  Element.prototype.setAttribute = function (name, value) {
+    if (
+      this instanceof HTMLAnchorElement &&
+      typeof name === 'string' &&
+      name.toLowerCase() === 'href' &&
+      !matchesSite(normalizeSafeHost(value)) &&
+      !shouldAllow(value)
+    ) {
+      console.warn('[AdBlock Ultra] sanitized href assignment', value);
+      value = 'about:blank';
+    }
+    return originalSetAttribute.call(this, name, value);
+  };
+
+  function normalizeSafeHost(value) {
+    try {
+      return normalize(new URL(value, location.href).hostname);
+    } catch (err) {
+      return '';
+    }
+  }
+
+  window.__AEGIS_POPUP_GUARD__ = {
+    sameDomainOnly,
+    updateConfig(config = {}) {
+      if (typeof config.sameDomainOnly === 'boolean') {
+        sameDomainOnly = config.sameDomainOnly;
+        this.sameDomainOnly = sameDomainOnly;
+      }
+    }
+  };
+})();

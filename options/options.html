@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AdBlock Ultra – Options</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>AdBlock Ultra</h1>
+        <p>Manage filter lists, heuristics, and allowlists.</p>
+      </div>
+      <button id="refresh-button">Update filters</button>
+    </header>
+
+    <section class="summary">
+      <div>
+        <span class="label">Status</span>
+        <span class="value" id="summary-status">Loading…</span>
+      </div>
+      <div>
+        <span class="label">Rules compiled</span>
+        <span class="value" id="summary-rules">0</span>
+      </div>
+      <div>
+        <span class="label">Requests blocked</span>
+        <span class="value" id="summary-blocked">0</span>
+      </div>
+      <div>
+        <span class="label">Last compiled</span>
+        <span class="value" id="summary-updated">Never</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Filter lists</h2>
+      <ul id="list-view"></ul>
+      <form id="add-list-form">
+        <h3>Add custom list</h3>
+        <div class="form-row">
+          <input type="text" id="list-title" placeholder="Display name" required />
+          <input type="url" id="list-url" placeholder="https://example.com/list.txt" required />
+          <button type="submit">Add</button>
+        </div>
+      </form>
+    </section>
+
+    <section>
+      <h2>Behaviour</h2>
+      <div class="toggle-row">
+        <div>
+          <p>Heuristic (AI-lite) element hiding</p>
+          <small>Scan pages for suspicious ad containers even when filters miss them.</small>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="heuristics-toggle" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <p>Same-domain only popups</p>
+          <small>Block any window/tab opening to a different domain unless explicitly allowlisted.</small>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="same-domain-toggle" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Support AdBlock Ultra</h2>
+      <p class="support-info">Share this extension or drop a tip to keep development going. Add links to your preferred donation or sponsorship platforms.</p>
+      <ul id="support-links" class="support-list"></ul>
+      <form id="support-form">
+        <div class="form-row">
+          <input type="text" id="support-label" placeholder="Label (e.g., GitHub Sponsors)" required />
+          <input type="url" id="support-url" placeholder="https://example.com/support" required />
+          <button type="submit">Add</button>
+        </div>
+      </form>
+    </section>
+
+    <section>
+      <h2>Allowlist</h2>
+      <ul id="allowlist"></ul>
+    </section>
+
+    <p id="status-message" class="status"></p>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

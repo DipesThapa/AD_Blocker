@@ -1,0 +1,173 @@
+:root {
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #202124;
+  background: #fff;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+}
+
+main {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.status h1 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.status p {
+  margin: 4px 0 0;
+  color: #5f6368;
+  font-size: 0.85rem;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stats div {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #757575;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+button {
+  border: none;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #1565c0;
+  color: #fff;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background: #0d47a1;
+}
+
+button.ghost {
+  background: transparent;
+  border: 1px solid #cfd8dc;
+  color: #1565c0;
+}
+
+button.ghost:hover {
+  border-color: #90caf9;
+  background: #e3f2fd;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #c62828;
+  transition: 0.3s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: '';
+  height: 18px;
+  width: 18px;
+  left: 4px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2e7d32;
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+.message {
+  min-height: 16px;
+  font-size: 0.85rem;
+  color: #5f6368;
+  margin: 4px 0 0;
+}
+
+.support {
+  border-top: 1px solid #eceff1;
+  padding-top: 12px;
+}
+
+.support p {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: #5f6368;
+}
+
+#support-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#support-buttons button {
+  flex: 1;
+  min-width: 120px;
+  background: #f5f8ff;
+  color: #1a237e;
+  border: 1px solid #c5cae9;
+}
+
+#support-buttons button:hover {
+  background: #e8eaf6;
+}
