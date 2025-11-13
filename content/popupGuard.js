@@ -67,12 +67,21 @@
     return trustedUrlPatterns.some((re) => re.test(str));
   };
 
+  const isSafePseudoUrl = (value) => {
+    if (!value) return false;
+    const trimmed = String(value).trim().toLowerCase();
+    return /^javascript:\s*(void\(0\)|void\(0\);?|;)?\s*$/.test(trimmed);
+  };
+
   const shouldAllow = (url) => {
     if (guardDisabled) {
       return true;
     }
     if (!url || url === 'about:blank') {
       return false;
+    }
+    if (isSafePseudoUrl(url)) {
+      return true;
     }
     let host = siteHost;
     try {
@@ -96,7 +105,7 @@
   const nativeOpen = window.open.bind(window);
   const guardedOpen = function (...args) {
     const url = args[0];
-    if (guardDisabled || isTrustedValue(url)) {
+    if (guardDisabled || isTrustedValue(url) || isSafePseudoUrl(url)) {
       return nativeOpen.apply(window, args);
     }
     if (!shouldAllow(url)) {
@@ -117,7 +126,7 @@
 
   const originalAnchorClick = HTMLAnchorElement.prototype.click;
   HTMLAnchorElement.prototype.click = function (...args) {
-    if (guardDisabled || isTrustedValue(this.href)) {
+    if (guardDisabled || isTrustedValue(this.href) || isSafePseudoUrl(this.href)) {
       return originalAnchorClick.apply(this, args);
     }
     try {
@@ -145,6 +154,7 @@
       typeof name === 'string' &&
       name.toLowerCase() === 'href' &&
       !guardDisabled &&
+      !isSafePseudoUrl(value) &&
       !isTrustedValue(value) &&
       !isTrustedHost(normalizeSafeHost(value)) &&
       !matchesSite(normalizeSafeHost(value)) &&
