@@ -52,7 +52,11 @@ const POPUP_GUARD_DISABLED_HOSTS = [
   'youtube.com',
   'www.youtube.com',
   'm.youtube.com',
-  'music.youtube.com'
+  'music.youtube.com',
+  'watchseries.im',
+  'www.watchseries.im',
+  'desicinemas.pk',
+  'www.desicinemas.pk'
 ];
 const NORMALIZED_POPUP_GUARD_DISABLED_HOSTS = POPUP_GUARD_DISABLED_HOSTS.map((host) =>
   host.replace(/^www\./, '').toLowerCase()
