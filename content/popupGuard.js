@@ -89,6 +89,9 @@
   const nativeOpen = window.open.bind(window);
   const guardedOpen = function (...args) {
     const url = args[0];
+    if (isTrustedValue(url)) {
+      return nativeOpen.apply(window, args);
+    }
     if (!shouldAllow(url)) {
       console.warn('[AdBlock Ultra] blocked popup', url);
       return null;
@@ -107,6 +110,9 @@
 
   const originalAnchorClick = HTMLAnchorElement.prototype.click;
   HTMLAnchorElement.prototype.click = function (...args) {
+    if (isTrustedValue(this.href)) {
+      return originalAnchorClick.apply(this, args);
+    }
     try {
       const host = normalize(new URL(this.href, location.href).hostname);
       if (isTrustedHost(host) || isTrustedValue(this.href)) {
@@ -131,8 +137,8 @@
       this instanceof HTMLAnchorElement &&
       typeof name === 'string' &&
       name.toLowerCase() === 'href' &&
-      !isTrustedHost(normalizeSafeHost(value)) &&
       !isTrustedValue(value) &&
+      !isTrustedHost(normalizeSafeHost(value)) &&
       !matchesSite(normalizeSafeHost(value)) &&
       !shouldAllow(value)
     ) {
