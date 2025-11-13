@@ -48,6 +48,12 @@ let ytSkipperInterval = null;
 let ytLastVolume = null;
 let sameDomainOnly = false;
 let popupGuardInitialized = false;
+const POPUP_GUARD_DISABLED_HOSTS = [
+  'youtube.com',
+  'www.youtube.com',
+  'm.youtube.com',
+  'music.youtube.com'
+];
 
 function getStorageValue(key) {
   return new Promise((resolve) => {
@@ -261,6 +267,10 @@ function injectExternalScript(path, dataset = {}) {
 
 function initGlobalPopupGuard(config) {
   if (popupGuardInitialized) {
+    return;
+  }
+  if (POPUP_GUARD_DISABLED_HOSTS.includes(location.hostname)) {
+    popupGuardInitialized = true;
     return;
   }
   popupGuardInitialized = true;
