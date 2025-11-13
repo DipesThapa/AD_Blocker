@@ -42,6 +42,7 @@ const SUPPORT_AUTOCONFIG_FALLBACKS = {
   buymeacoffee: ['hackmedipeo', 'adblockultra']
 };
 const SUPPORT_AUTOCONFIG_VERSION = 2;
+const POPUP_GUARD_VERSION = 2;
 const SUPPORT_PROVIDERS = {
   github: {
     id: 'github-sponsors',
@@ -90,7 +91,8 @@ function createDefaultState() {
     supportLinks: structuredClone(DEFAULT_SUPPORT_LINKS),
     supportAutoconfigChecked: false,
     supportAutoconfigVersion: SUPPORT_AUTOCONFIG_VERSION,
-    sameDomainOnly: false,
+    sameDomainOnly: true,
+    popupGuardVersion: POPUP_GUARD_VERSION,
     stats: {
       blocked: 0,
       updatedAt: Date.now()
@@ -153,7 +155,12 @@ async function ensureState() {
     dirty = true;
   }
   if (typeof state.sameDomainOnly !== 'boolean') {
-    state.sameDomainOnly = false;
+    state.sameDomainOnly = true;
+    dirty = true;
+  }
+  if (state.popupGuardVersion !== POPUP_GUARD_VERSION) {
+    state.sameDomainOnly = true;
+    state.popupGuardVersion = POPUP_GUARD_VERSION;
     dirty = true;
   }
   if (!state.stats) {
