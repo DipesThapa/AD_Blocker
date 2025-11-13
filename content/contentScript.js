@@ -54,6 +54,9 @@ const POPUP_GUARD_DISABLED_HOSTS = [
   'm.youtube.com',
   'music.youtube.com'
 ];
+const NORMALIZED_POPUP_GUARD_DISABLED_HOSTS = POPUP_GUARD_DISABLED_HOSTS.map((host) =>
+  host.replace(/^www\./, '').toLowerCase()
+);
 
 function getStorageValue(key) {
   return new Promise((resolve) => {
@@ -270,11 +273,13 @@ function initGlobalPopupGuard(config) {
     return;
   }
   popupGuardInitialized = true;
-  const guardDisabled = POPUP_GUARD_DISABLED_HOSTS.includes(location.hostname);
+  const guardDisabled = shouldDisablePopupGuard(location.hostname);
+  if (guardDisabled) {
+    return;
+  }
   injectExternalScript('content/popupGuard.js', {
     siteHost: location.hostname,
-    sameDomainOnly: String(!!config?.sameDomainOnly),
-    disabled: String(guardDisabled)
+    sameDomainOnly: String(!!config?.sameDomainOnly)
   });
 }
 
@@ -339,3 +344,10 @@ async function initialize() {
 }
 
 initialize().catch((err) => console.error('content-script init failed', err));
+function shouldDisablePopupGuard(hostname) {
+  if (!hostname) return false;
+  const normalized = hostname.replace(/^www\./, '').toLowerCase();
+  return NORMALIZED_POPUP_GUARD_DISABLED_HOSTS.some(
+    (target) => normalized === target || normalized.endsWith(`.${target}`)
+  );
+}
