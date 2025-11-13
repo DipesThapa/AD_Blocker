@@ -179,8 +179,7 @@
       !matchesSite(normalizeSafeHost(value)) &&
       !shouldAllow(value, { ignoreGesture: true })
     ) {
-      console.warn('[AdBlock Ultra] blocked href assignment attempt', value);
-      return;
+      console.warn('[AdBlock Ultra] flagged href assignment attempt', value);
     }
     return originalSetAttribute.call(this, name, value);
   };
