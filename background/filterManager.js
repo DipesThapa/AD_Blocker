@@ -19,7 +19,13 @@ const DISABLE_RULE_ID = 900000;
 const MAX_CACHE_SIZE = 900_000; // chars
 const AUTO_UPDATE_ALARM = 'aegis::auto-update';
 
-const DEFAULT_SUPPORT_LINKS = [];
+const DEFAULT_SUPPORT_LINKS = [
+  {
+    id: 'buymeacoffee',
+    label: 'Buy Me a Coffee',
+    url: 'https://www.buymeacoffee.com/hackmedipeo'
+  }
+];
 const DEPRECATED_SUPPORT_URLS = new Set([
   'https://github.com/sponsors/aegisadshield',
   'https://www.buymeacoffee.com/aegisadshield'
@@ -28,6 +34,7 @@ const SUPPORT_AUTOCONFIG_FALLBACKS = {
   github: ['adblockultra'],
   buymeacoffee: ['hackmedipeo', 'adblockultra']
 };
+const SUPPORT_AUTOCONFIG_VERSION = 2;
 const SUPPORT_PROVIDERS = {
   github: {
     id: 'github-sponsors',
@@ -75,6 +82,7 @@ function createDefaultState() {
     allowlist: [],
     supportLinks: structuredClone(DEFAULT_SUPPORT_LINKS),
     supportAutoconfigChecked: false,
+    supportAutoconfigVersion: SUPPORT_AUTOCONFIG_VERSION,
     sameDomainOnly: false,
     stats: {
       blocked: 0,
@@ -129,6 +137,11 @@ async function ensureState() {
     dirty = true;
   }
   if (typeof state.supportAutoconfigChecked !== 'boolean') {
+    state.supportAutoconfigChecked = false;
+    dirty = true;
+  }
+  if (state.supportAutoconfigVersion !== SUPPORT_AUTOCONFIG_VERSION) {
+    state.supportAutoconfigVersion = SUPPORT_AUTOCONFIG_VERSION;
     state.supportAutoconfigChecked = false;
     dirty = true;
   }
@@ -507,6 +520,7 @@ export async function saveSupportLinks(links = []) {
     .map((link, index) => sanitizeSupportLink(link, `support-${timestamp}-${index}`))
     .filter(Boolean);
   state.supportAutoconfigChecked = true;
+  state.supportAutoconfigVersion = SUPPORT_AUTOCONFIG_VERSION;
   await saveState(state);
   stateCache = state;
   return state;
@@ -525,8 +539,15 @@ async function normalizeSupportLinks(state) {
     const detected = await autoDetectSupportLinks();
     if (detected.length) {
       state.supportLinks = detected;
+    } else {
+      state.supportLinks = structuredClone(DEFAULT_SUPPORT_LINKS);
     }
     state.supportAutoconfigChecked = true;
+    state.supportAutoconfigVersion = SUPPORT_AUTOCONFIG_VERSION;
+    dirty = true;
+  } else if (state.supportLinks.length && !state.supportAutoconfigChecked) {
+    state.supportAutoconfigChecked = true;
+    state.supportAutoconfigVersion = SUPPORT_AUTOCONFIG_VERSION;
     dirty = true;
   }
   return dirty;
