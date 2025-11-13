@@ -18,6 +18,12 @@
       .filter(Boolean)
   );
   const trustedHostArray = Array.from(trustedHosts);
+  const trustedHostPatterns = trustedHostArray.map(
+    (host) => new RegExp(`(^|\\.)${escapeRegex(host)}$`, 'i')
+  );
+  const trustedUrlPatterns = trustedHostArray.map(
+    (host) => new RegExp(escapeRegex(host), 'i')
+  );
 
   let lastGestureHost = siteHost;
   let lastGestureAt = 0;
@@ -49,14 +55,12 @@
     document.addEventListener(type, baseHandler, true);
   });
 
-  const isTrustedHost = (host) =>
-    Boolean(host) &&
-    trustedHostArray.some((trusted) => host === trusted || host.endsWith(`.${trusted}`));
+  const isTrustedHost = (host) => Boolean(host) && trustedHostPatterns.some((re) => re.test(host));
 
   const isTrustedValue = (value) => {
     if (!value) return false;
-    const lower = String(value).toLowerCase();
-    return trustedHostArray.some((trusted) => lower.includes(trusted));
+    const str = String(value);
+    return trustedUrlPatterns.some((re) => re.test(str));
   };
 
   const shouldAllow = (url) => {
@@ -144,6 +148,10 @@
     } catch (err) {
       return '';
     }
+  }
+
+  function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   window.__AEGIS_POPUP_GUARD__ = {
