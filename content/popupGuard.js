@@ -73,7 +73,7 @@
     return /^javascript:\s*(void\(0\)|void\(0\);?|;)?\s*$/.test(trimmed);
   };
 
-  const shouldAllow = (url) => {
+  const shouldAllow = (url, { ignoreGesture } = {}) => {
     if (guardDisabled) {
       return true;
     }
@@ -95,7 +95,7 @@
     if (sameDomainOnly) {
       return matchesSite(host);
     }
-    const withinGesture = Date.now() - lastGestureAt <= gestureWindowMs;
+    const withinGesture = ignoreGesture ? true : Date.now() - lastGestureAt <= gestureWindowMs;
     if (!withinGesture) {
       return matchesSite(host);
     }
@@ -158,7 +158,7 @@
       !isTrustedValue(value) &&
       !isTrustedHost(normalizeSafeHost(value)) &&
       !matchesSite(normalizeSafeHost(value)) &&
-      !shouldAllow(value)
+      !shouldAllow(value, { ignoreGesture: true })
     ) {
       console.warn('[AdBlock Ultra] blocked href assignment attempt', value);
       return;
