@@ -71,4 +71,4 @@ assets/
 Contributions welcome—extend the parser, add stats per tab, or ship preset list bundles.
 ## Supporting development
 
-Open the Options page and scroll to **Support AdBlock Ultra** to configure donation or sponsorship links (GitHub Sponsors, Buy Me a Coffee, etc.). The extension no longer ships with placeholder URLs, so add only the destinations you control. Those links also surface in the popup so grateful users can chip in. No telemetry or data sharing is involved—just opt-in support.
+Open the Options page and scroll to **Support AdBlock Ultra** to configure donation or sponsorship links (GitHub Sponsors, Buy Me a Coffee, etc.). Defaults point to the official AdBlock Ultra profiles (`/sponsors/adblockultra`, `/buymeacoffee/adblockultra`), but you can swap them for destinations you control. Those links also surface in the popup so grateful users can chip in. No telemetry or data sharing is involved—just opt-in support.

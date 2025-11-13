@@ -19,7 +19,18 @@ const DISABLE_RULE_ID = 900000;
 const MAX_CACHE_SIZE = 900_000; // chars
 const AUTO_UPDATE_ALARM = 'aegis::auto-update';
 
-const DEFAULT_SUPPORT_LINKS = [];
+const DEFAULT_SUPPORT_LINKS = [
+  {
+    id: 'github-sponsors',
+    label: 'GitHub Sponsors',
+    url: 'https://github.com/sponsors/adblockultra'
+  },
+  {
+    id: 'buymeacoffee',
+    label: 'Buy Me a Coffee',
+    url: 'https://www.buymeacoffee.com/adblockultra'
+  }
+];
 const DEPRECATED_SUPPORT_URLS = new Set([
   'https://github.com/sponsors/aegisadshield',
   'https://www.buymeacoffee.com/aegisadshield'
@@ -107,9 +118,15 @@ async function ensureState() {
     if (!Array.isArray(state.supportLinks)) {
       state.supportLinks = structuredClone(DEFAULT_SUPPORT_LINKS);
     } else {
+      const hadDeprecated = state.supportLinks.some((link) =>
+        DEPRECATED_SUPPORT_URLS.has(link?.url)
+      );
       state.supportLinks = state.supportLinks.filter(
         (link) => link && link.url && !DEPRECATED_SUPPORT_URLS.has(link.url)
       );
+      if (!state.supportLinks.length && hadDeprecated) {
+        state.supportLinks = structuredClone(DEFAULT_SUPPORT_LINKS);
+      }
     }
     if (typeof state.sameDomainOnly !== 'boolean') {
       state.sameDomainOnly = false;
