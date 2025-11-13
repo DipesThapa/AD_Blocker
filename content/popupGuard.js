@@ -150,8 +150,8 @@
       !matchesSite(normalizeSafeHost(value)) &&
       !shouldAllow(value)
     ) {
-      console.warn('[AdBlock Ultra] sanitized href assignment', value);
-      value = 'about:blank';
+      console.warn('[AdBlock Ultra] blocked href assignment attempt', value);
+      return;
     }
     return originalSetAttribute.call(this, name, value);
   };
