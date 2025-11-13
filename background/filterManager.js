@@ -26,7 +26,7 @@ const DEPRECATED_SUPPORT_URLS = new Set([
 ]);
 const SUPPORT_AUTOCONFIG_FALLBACKS = {
   github: ['adblockultra'],
-  buymeacoffee: ['adblockultra']
+  buymeacoffee: ['hackmedipeo', 'adblockultra']
 };
 const SUPPORT_PROVIDERS = {
   github: {
