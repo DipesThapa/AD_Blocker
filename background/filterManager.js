@@ -28,8 +28,15 @@ const DEFAULT_SUPPORT_LINKS = [
 ];
 const DEPRECATED_SUPPORT_URLS = new Set([
   'https://github.com/sponsors/aegisadshield',
-  'https://www.buymeacoffee.com/aegisadshield'
+  'https://www.buymeacoffee.com/aegisadshield',
+  'https://buymeacoffee.com/aegisadshield'
 ]);
+const SUPPORT_URL_REDIRECTS = new Map(
+  [
+    ['https://www.buymeacoffee.com/adblocker', 'https://www.buymeacoffee.com/hackmedipeo'],
+    ['https://buymeacoffee.com/adblocker', 'https://www.buymeacoffee.com/hackmedipeo']
+  ].map(([from, to]) => [normalizeRedirectKey(from), to])
+);
 const SUPPORT_AUTOCONFIG_FALLBACKS = {
   github: ['adblockultra'],
   buymeacoffee: ['hackmedipeo', 'adblockultra']
@@ -556,7 +563,11 @@ async function normalizeSupportLinks(state) {
 function sanitizeSupportLink(link, fallbackId) {
   if (!link) return null;
   const label = (link.label || '').trim();
-  const url = (link.url || '').trim();
+  let url = (link.url || '').trim();
+  const redirectTarget = SUPPORT_URL_REDIRECTS.get(normalizeRedirectKey(url));
+  if (redirectTarget) {
+    url = redirectTarget;
+  }
   if (!isValidHttpUrl(url) || DEPRECATED_SUPPORT_URLS.has(url)) {
     return null;
   }
@@ -575,6 +586,10 @@ function isValidHttpUrl(value) {
   } catch {
     return false;
   }
+}
+
+function normalizeRedirectKey(value) {
+  return (value || '').trim().replace(/\/+$/, '').toLowerCase();
 }
 
 function extractRepoMeta() {
